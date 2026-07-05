@@ -11,6 +11,7 @@ const BLANK = () => ({
   jobCardDate: today(), receiveDate: today(), deliveryDate: today(), reminderTime: '',
   customerVoice: [''], invoiceNo: '', invoiceAmount: '', paidAmount: '', laborCharges: '',
   rearImage: '', vinImage: '', odoImage: '', inspectionPhotos: '',
+  referToMechanical: false,
 })
 
 function today() { return new Date().toISOString().split('T')[0] }
@@ -36,10 +37,12 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
       odoImage:      parseImages(initial.odoImage)[0]  || '',
     }
   })
-  const [saving,    setSaving]    = useState(false)
-  const [uploading, setUploading] = useState({})
-  const [tab,       setTab]       = useState('info')
-  const [users,     setUsers]     = useState([])
+  const [saving,              setSaving]              = useState(false)
+  const [uploading,           setUploading]           = useState({})
+  const [tab,                 setTab]                 = useState('info')
+  const [users,               setUsers]               = useState([])
+  const [referToMechanical,   setReferToMechanical]   = useState(initial?.referToMechanical || false)
+  const [alreadyReferred,     setAlreadyReferred]     = useState(!!(initial?.linkedJobId))
 
   useEffect(() => {
     api.get('/users').then(r => setUsers(r.data)).catch(() => {})
@@ -95,9 +98,16 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
         plateNumber:   form.plateNumber.toUpperCase(),
       }
       delete payload._id; delete payload.__v; delete payload.createdAt; delete payload.updatedAt
+      payload.referToMechanical = referToMechanical
 
-      if (isEditing) await api.put(`/jobcards/${initial._id}`, payload)
-      else           await api.post('/jobcards', payload)
+      let savedCard
+      if (isEditing) {
+        const res = await api.put(`/jobcards/${initial._id}`, payload)
+        savedCard = res.data
+      } else {
+        const res = await api.post('/jobcards', payload)
+        savedCard = res.data
+      }
 
       onSave()
     } catch (err) {
@@ -197,6 +207,27 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
                     </select>
                   </Field>
                 </div>
+              </Section>
+
+              {/* Mechanical Referral */}
+              <Section title="Cross-App Referral">
+                {alreadyReferred ? (
+                  <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+                    <span className="text-purple-600 text-lg">🔗</span>
+                    <div>
+                      <p className="text-sm font-bold text-purple-700 dark:text-purple-400">Already referred to Visco Mechanical</p>
+                      {initial?.linkedJobCardNo && <p className="text-xs text-purple-600">Mechanical Job: {initial.linkedJobCardNo}</p>}
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-3 cursor-pointer p-3 border border-dashed border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors">
+                    <input type="checkbox" checked={referToMechanical} onChange={e => setReferToMechanical(e.target.checked)} className="w-4 h-4 accent-purple-600" />
+                    <div>
+                      <p className="text-sm font-bold text-gray-800 dark:text-white">🔧 Refer to Visco Mechanical Workshop</p>
+                      <p className="text-xs text-gray-500">A linked job card will be created in the Mechanical app</p>
+                    </div>
+                  </label>
+                )}
               </Section>
 
               {/* Customer Voice */}

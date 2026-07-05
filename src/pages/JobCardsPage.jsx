@@ -239,6 +239,21 @@ function DetailPanel({ card, onClose, onEdit, onDelete, onStatusChange, onCardUp
               )}
             </div>
           </div>
+          {/* Mechanical Referral Banner */}
+          {card.linkedJobId && (
+            <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
+              <span className="text-2xl">🔗</span>
+              <div className="flex-1">
+                <p className="text-sm font-black text-purple-700 dark:text-purple-400">Linked to {card.linkedAppName || 'Visco Mechanical'}</p>
+                {card.linkedJobCardNo && <p className="text-xs text-purple-600 dark:text-purple-500">Job Card: <span className="font-bold">{card.linkedJobCardNo}</span></p>}
+              </div>
+              <a href="https://visco-web.netlify.app" target="_blank" rel="noreferrer"
+                className="text-xs font-bold px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white">
+                Open Mechanical →
+              </a>
+            </div>
+          )}
+
           {(canEditCard || isOwner) && <PartCostsSection card={card} onCardUpdate={onCardUpdate} readOnly={isOwner} />}
 
           {(isAdmin || isOwner) && (
