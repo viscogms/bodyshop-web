@@ -4,6 +4,7 @@ import { getStatusColor, INACTIVE_STATUSES, formatDate, getCleanModel, getCustom
 import { useAuthContext } from '../api/AuthContext'
 import JobCardForm from '../components/JobCardForm'
 import InspectionReportTab from '../components/InspectionReportTab'
+import InvoiceTab from '../components/InvoiceTab'
 import Swal from 'sweetalert2'
 
 export default function JobCardsPage() {
@@ -106,7 +107,7 @@ export default function JobCardsPage() {
       ) : sorted.length === 0 ? (
         <div className="card text-center text-gray-400 py-10">No job cards found</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
           {sorted.map(card => {
             const inactive = INACTIVE_STATUSES.includes(card.status)
             const pendingTodos = (card.todos||[]).filter(t => !t.completed).length
@@ -118,7 +119,7 @@ export default function JobCardsPage() {
                 onClick={() => setSelected(card)}
                 className={`card p-0 overflow-hidden cursor-pointer hover:shadow-md transition-shadow ${inactive ? 'opacity-50' : ''}`}
               >
-                <div className="h-28 bg-green-50 dark:bg-gray-800 relative">
+                <div className="h-36 bg-green-50 dark:bg-gray-800 relative">
                   {img
                     ? <img src={img} alt="" className="w-full h-full object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-3xl">🚗</div>}
@@ -161,12 +162,15 @@ export default function JobCardsPage() {
 }
 
 function DetailPanel({ card, onClose, onEdit, onDelete, onStatusChange, onCardUpdate, canEditCard, isAdmin, isOwner, users = [] }) {
+  const [detailTab, setDetailTab] = useState('info')
   const images    = parseImages(card.rearImage)
   const vinImages = parseImages(card.vinImage)
   const odoImages = parseImages(card.odoImage)
   const parts     = (card.inspectionDetails || []).map(decodePart).filter(p => p.name.trim())
   const todos     = card.todos || []
   const balance   = (Number(card.invoiceAmount||0) - Number(card.paidAmount||0)).toFixed(2)
+
+  const TABS = [['info','📋 Details'],['inspection','🔍 Inspection'],['invoice','🧾 Invoice']]
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -178,7 +182,26 @@ function DetailPanel({ card, onClose, onEdit, onDelete, onStatusChange, onCardUp
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl ml-2">✕</button>
           </div>
         </div>
-        <div className="p-5 space-y-4">
+        {/* Tab Bar */}
+        <div className="flex border-b border-gray-200 dark:border-gray-800 sticky top-[61px] bg-white dark:bg-gray-900 z-10">
+          {TABS.map(([key, label]) => (
+            <button key={key} onClick={() => setDetailTab(key)}
+              className={`flex-1 py-2.5 text-xs font-bold transition-colors ${detailTab === key ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-400 hover:text-gray-600'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {detailTab === 'inspection' && (
+          <div className="p-5">
+            <InspectionReportTab card={card} onCardUpdate={onCardUpdate} readOnly={!canEditCard} />
+          </div>
+        )}
+        {detailTab === 'invoice' && (
+          <div className="p-5">
+            <InvoiceTab card={card} onCardUpdate={onCardUpdate} />
+          </div>
+        )}
+        {detailTab === 'info' && <div className="p-5 space-y-4">
           {images[0] && <img src={images[0]} alt="" className="w-full h-48 object-cover" />}
           {(vinImages[0] || odoImages[0]) && (
             <div className="grid grid-cols-2 gap-2">
@@ -294,7 +317,7 @@ function DetailPanel({ card, onClose, onEdit, onDelete, onStatusChange, onCardUp
             </div>
           )}
           {onDelete && <button onClick={() => onDelete(card._id)} className="btn-danger w-full py-2 text-sm mt-2">🗑️ DELETE JOB CARD</button>}
-        </div>
+        </div>}
       </div>
     </div>
   )
