@@ -47,14 +47,14 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className={`
         fixed md:relative z-30 h-full w-60 flex-shrink-0 flex flex-col
-        bg-gray-950 border-r border-gray-800
+        bg-green-950 border-r border-green-900
         transition-transform duration-300
         ${sidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="px-5 py-4 border-b border-gray-800">
+        <div className="px-5 py-4 border-b border-green-900">
           <p className="text-white font-black text-sm tracking-widest">VISCO BODY SHOP</p>
-          <p className="text-gray-500 text-xs mt-0.5">Digital ERP</p>
+          <p className="text-green-400/60 text-xs mt-0.5">Digital ERP</p>
         </div>
 
         {/* Nav */}
@@ -68,8 +68,8 @@ export default function Layout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-5 py-3 text-sm font-semibold transition-colors
                  ${isActive
-                   ? 'bg-gray-800 text-white border-l-2 border-brand'
-                   : 'text-gray-400 hover:text-white hover:bg-gray-900'}`
+                   ? 'bg-green-900 text-white border-l-2 border-green-400'
+                   : 'text-green-300/60 hover:text-white hover:bg-green-900/60'}`
               }
             >
               <span>{n.icon}</span>
@@ -79,9 +79,9 @@ export default function Layout() {
         </nav>
 
         {/* User */}
-        <div className="px-5 py-4 border-t border-gray-800" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div className="px-5 py-4 border-t border-green-900" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <p className="text-white text-xs font-bold">{user?.name}</p>
-          <p className="text-gray-500 text-xs">{user?.role}</p>
+          <p className="text-green-400/60 text-xs">{user?.role}</p>
           <button onClick={handleLogout} className="mt-3 w-full text-xs bg-red-700 text-white py-2 font-bold hover:bg-red-600 transition-colors">
             LOGOUT
           </button>
@@ -91,7 +91,7 @@ export default function Layout() {
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center justify-between px-4 py-3 bg-gray-950 border-b border-gray-800 flex-shrink-0">
+        <header className="flex items-center justify-between px-4 py-3 bg-green-950 border-b border-green-900 flex-shrink-0">
           <button className="md:hidden text-white text-xl" onClick={() => setSidebar(true)}>☰</button>
           <div className="hidden md:block" />
           <div className="flex items-center gap-3">
