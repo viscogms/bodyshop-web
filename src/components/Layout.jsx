@@ -112,6 +112,11 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Watermark */}
+      <div className="fixed bottom-3 right-3 text-[10px] text-gray-400/50 font-semibold select-none pointer-events-none z-50">
+        by EC
+      </div>
     </div>
   )
 }
