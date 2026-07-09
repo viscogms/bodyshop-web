@@ -14,6 +14,7 @@ const COMPANY = {
   iban:        'AE090030011863073820001',
   logoUrl:     'https://bodyshop-web-three.vercel.app/icon-192.png',
   thankYou:    'Thank You for Trusting Us with Your Vehicle!',
+  footer:      'We appreciate your business and the opportunity to serve you. At Visco Auto Repairs, we are committed to delivering quality service and ensuring your vehicle is running at its best. If you have any questions or need further assistance, please don\'t hesitate to reach out.\n\nSafe travels, and we look forward to serving you again!',
 }
 
 function today() { return new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g,'-') }
@@ -134,6 +135,10 @@ export function buildInvoiceHTML(invoice, card) {
 </div>
 
 <div style="margin-top:24px;font-size:11px;font-weight:bold;font-style:italic;text-align:center">${COMPANY.thankYou}</div>
+
+<div style="margin-top:20px;padding-top:16px;border-top:1px solid #ddd;font-size:10px;line-height:1.7;color:#555">
+  ${COMPANY.footer.replace(/\n/g,'<br/>')}
+</div>
 
 <script>window.onload=()=>{window.print()}</script>
 </body></html>`
