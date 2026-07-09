@@ -2,19 +2,18 @@ import { useState, useEffect } from 'react'
 import api from '../api/client'
 
 const COMPANY = {
-  name:        'VISCO BODY SHOP LLC',
+  name:        'VISCO AUTO REPAIRS LLC',
   poBox:       'PO Box 10977',
   location:    'Dubai, UAE',
   phones:      '+971 50 751 4754 | +971 56 919 6759',
   trn:         'TRN 100544863200003',
   emails:      'khanajmimohd@gmail.com | lathika.visco@gmail.com',
   bank:        'Abu Dhabi Commercial Bank - ADCB',
-  accountName: 'Visco Body Shop',
+  accountName: 'Visco Auto Repairs',
   accountNo:   '11863073820001',
   iban:        'AE090030011863073820001',
   logoUrl:     'https://bodyshop-web-three.vercel.app/icon-192.png',
   thankYou:    'Thank You for Trusting Us with Your Vehicle!',
-  footer:      'We appreciate your business and the opportunity to serve you. At Visco Body Shop, we are committed to delivering quality service and ensuring your vehicle looks its best. If you have any questions or need further assistance, please don\'t hesitate to reach out.\n\nSafe travels, and we look forward to serving you again!',
 }
 
 function today() { return new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g,'-') }
@@ -41,13 +40,15 @@ export function buildInvoiceHTML(invoice, card) {
   const paid     = Number(invoice.paidAmount ?? card.paidAmount ?? 0)
   const balance  = Math.max(0, total - paid)
   const { make, model } = parseMake(card.carModel)
+  const odoKM    = invoice.odoKM || card.odoKM || ''
+  const notes    = invoice.notes || ''
 
   const rowsHTML = lines.map(l => {
-    const amt = (Number(l.qty||0) * Number(l.rate||0)).toFixed(1)
+    const amt = (Number(l.qty||0) * Number(l.rate||0)).toFixed(2)
     return `<tr>
       <td style="border:1px solid #ccc;padding:6px 8px;font-size:11px">${l.description || ''}</td>
       <td style="border:1px solid #ccc;padding:6px 8px;font-size:11px;text-align:center">${Number(l.qty||0).toFixed(2)}</td>
-      <td style="border:1px solid #ccc;padding:6px 8px;font-size:11px;text-align:right">د.إ ${Number(l.rate||0).toFixed(2)}</td>
+      <td style="border:1px solid #ccc;padding:6px 8px;font-size:11px;text-align:right">AED ${Number(l.rate||0).toFixed(2)}</td>
       <td style="border:1px solid #ccc;padding:6px 8px;font-size:11px;text-align:right">${amt}</td>
     </tr>`
   }).join('')
@@ -57,28 +58,27 @@ export function buildInvoiceHTML(invoice, card) {
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:28px 32px}
-  @page{margin:10mm}
+  @page{margin:12mm 14mm}
   @media print{body{padding:0}}
-  .page2{page-break-before:always;padding:28px 32px}
 </style>
 </head><body>
 
-<!-- PAGE 1 -->
+<!-- HEADER -->
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
   <div>
     <div style="font-size:30px;font-weight:900;letter-spacing:-1px">TAX INVOICE</div>
     <div style="font-size:14px;margin:4px 0 12px">Invoice # ${invoice.invoiceNo || 'INV-0001'}</div>
     <div style="font-size:12px;font-weight:bold">Balance Due</div>
-    <div style="font-size:20px;font-weight:900">AED ${balance.toFixed(2)} د.إ</div>
+    <div style="font-size:20px;font-weight:900">AED ${balance.toFixed(2)}</div>
   </div>
   <div style="text-align:right">
     <img src="${COMPANY.logoUrl}" style="width:80px;height:80px;object-fit:contain;margin-bottom:6px;display:block;margin-left:auto"/>
     <div style="font-size:15px;font-weight:900">${COMPANY.name}</div>
     <div style="font-size:11px;color:#333;margin-top:2px">${COMPANY.poBox}</div>
     <div style="font-size:11px;color:#333">${COMPANY.location}</div>
-    <div style="font-size:11px;color:#333">|${COMPANY.phones}|</div>
+    <div style="font-size:11px;color:#333">${COMPANY.phones}</div>
     <div style="font-size:11px;color:#333">${COMPANY.trn}</div>
-    <div style="font-size:11px;color:#333">|${COMPANY.emails}|</div>
+    <div style="font-size:11px;color:#333">${COMPANY.emails}</div>
   </div>
 </div>
 
@@ -88,9 +88,10 @@ export function buildInvoiceHTML(invoice, card) {
   <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Terms</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${invoice.terms || 'Due on Receipt'}</td></tr>
   <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Due Date</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${invoice.dueDate || today()}</td></tr>
   <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Job Reference</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${card.jobCardNo || card._id}</td></tr>
+  <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Plate Number</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;font-weight:bold">${card.plateNumber || ''}</td></tr>
   <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Vehicle Make</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${invoice.vehicleMake || make}</td></tr>
   <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Vehicle Model</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${invoice.vehicleModel || model}</td></tr>
-  <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Vehicle Mileage</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${card.odoKM || ''}</td></tr>
+  <tr><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;background:#f9f9f9;color:#555">Odometer (KM)</td><td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${odoKM}</td></tr>
 </table>
 
 <div style="margin-bottom:16px">
@@ -112,29 +113,27 @@ export function buildInvoiceHTML(invoice, card) {
 </table>
 
 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px">
-  <div style="font-size:10px;color:#333;width:45%">
-    <div style="font-size:11px;font-weight:bold;margin-bottom:4px">Bank Details</div>
-    Bank : ${COMPANY.bank}<br/>
-    Account Name : ${COMPANY.accountName}<br/>
-    Account No : ${COMPANY.accountNo}<br/>
-    IBAN : ${COMPANY.iban}
+  <div style="width:45%">
+    <div style="font-size:10px;color:#333;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:bold;margin-bottom:4px">Bank Details</div>
+      Bank : ${COMPANY.bank}<br/>
+      Account Name : ${COMPANY.accountName}<br/>
+      Account No : ${COMPANY.accountNo}<br/>
+      IBAN : ${COMPANY.iban}
+    </div>
+    ${notes ? `<div style="font-size:10px;color:#333;border:1px solid #ddd;padding:8px;background:#fafafa"><div style="font-size:11px;font-weight:bold;margin-bottom:4px">Notes</div>${notes.replace(/\n/g,'<br/>')}</div>` : ''}
   </div>
   <table style="width:50%;border-collapse:collapse">
-    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Sub-Total</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">د.إ ${subTotal.toFixed(2)}</td></tr>
-    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Discount</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">د.إ ${discount.toFixed(2)}</td></tr>
-    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Tax @ 5%</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">د.إ ${tax.toFixed(2)}</td></tr>
-    <tr><td style="padding:5px 8px;font-size:13px;font-weight:900;border-top:2px solid #000">Total (AED)</td><td style="padding:5px 8px;font-size:13px;font-weight:900;border-top:2px solid #000;text-align:right">د.إ ${total.toFixed(2)}</td></tr>
-    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Payment Received</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">د.إ ${paid.toFixed(2)}</td></tr>
-    <tr><td style="padding:5px 8px;font-size:12px;font-weight:900">Balance Due</td><td style="padding:5px 8px;font-size:12px;font-weight:900;text-align:right">د.إ ${balance.toFixed(2)}</td></tr>
+    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Sub-Total</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">AED ${subTotal.toFixed(2)}</td></tr>
+    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Discount</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">AED ${discount.toFixed(2)}</td></tr>
+    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Tax @ 5%</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">AED ${tax.toFixed(2)}</td></tr>
+    <tr><td style="padding:5px 8px;font-size:13px;font-weight:900;border-top:2px solid #000">Total (AED)</td><td style="padding:5px 8px;font-size:13px;font-weight:900;border-top:2px solid #000;text-align:right">AED ${total.toFixed(2)}</td></tr>
+    <tr><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">Payment Received</td><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee;text-align:right;font-weight:bold">AED ${paid.toFixed(2)}</td></tr>
+    <tr><td style="padding:5px 8px;font-size:12px;font-weight:900">Balance Due</td><td style="padding:5px 8px;font-size:12px;font-weight:900;text-align:right">AED ${balance.toFixed(2)}</td></tr>
   </table>
 </div>
 
-<div style="margin-top:20px;font-size:11px;font-weight:bold;font-style:italic">${COMPANY.thankYou}</div>
-
-<!-- PAGE 2 -->
-<div class="page2">
-  <div style="font-size:11px;line-height:1.7;color:#333">${COMPANY.footer.replace(/\n/g,'<br/>')}</div>
-</div>
+<div style="margin-top:24px;font-size:11px;font-weight:bold;font-style:italic;text-align:center">${COMPANY.thankYou}</div>
 
 <script>window.onload=()=>{window.print()}</script>
 </body></html>`
@@ -153,8 +152,10 @@ export default function InvoiceTab({ card, onCardUpdate }) {
     customerTRN:  '',
     vehicleMake:  make,
     vehicleModel: model,
+    odoKM:        card.odoKM || '',
     discount:     0,
     paidAmount:   card.paidAmount || 0,
+    notes:        '',
   }
 
   const defaultLines = () => {
@@ -169,8 +170,8 @@ export default function InvoiceTab({ card, onCardUpdate }) {
   const [saved,   setSaved]   = useState(false)
 
   useEffect(() => {
-    setMeta(m => ({ ...defaultMeta, ...m, ...(card.invoiceMeta || {}) }))
-    if (card.invoiceLines?.length) setLines(card.invoiceLines)
+    setMeta({ ...defaultMeta, ...(card.invoiceMeta || {}) })
+    setLines(card.invoiceLines?.length ? card.invoiceLines : defaultLines())
   }, [card._id])
 
   const subTotal = lines.reduce((s, l) => s + (Number(l.qty||0) * Number(l.rate||0)), 0)
@@ -243,6 +244,7 @@ export default function InvoiceTab({ card, onCardUpdate }) {
             ['Order Ref',      'orderRef'],
             ['Vehicle Make',   'vehicleMake'],
             ['Vehicle Model',  'vehicleModel'],
+            ['Odometer (KM)',  'odoKM'],
           ].map(([label, field]) => (
             <div key={field}>
               <p className={labelCls}>{label}</p>
@@ -275,8 +277,6 @@ export default function InvoiceTab({ card, onCardUpdate }) {
             + Add Row
           </button>
         </div>
-
-        {/* Table header */}
         <div className="grid grid-cols-12 gap-1 mb-1 px-1">
           <div className="col-span-6 text-[10px] text-gray-400 font-bold uppercase">Description</div>
           <div className="col-span-2 text-[10px] text-gray-400 font-bold uppercase text-center">Qty</div>
@@ -284,7 +284,6 @@ export default function InvoiceTab({ card, onCardUpdate }) {
           <div className="col-span-1 text-[10px] text-gray-400 font-bold uppercase text-right">Amount</div>
           <div className="col-span-1" />
         </div>
-
         <div className="space-y-1">
           {lines.map((line, i) => {
             const amt = (Number(line.qty||0) * Number(line.rate||0))
@@ -293,7 +292,7 @@ export default function InvoiceTab({ card, onCardUpdate }) {
                 <input className={`col-span-6 ${inputCls}`} value={line.description} onChange={e => updateLine(i, 'description', e.target.value)} placeholder="Description" />
                 <input className={`col-span-2 ${inputCls} text-center`} value={line.qty} onChange={e => updateLine(i, 'qty', e.target.value)} />
                 <input className={`col-span-2 ${inputCls} text-center`} value={line.rate} onChange={e => updateLine(i, 'rate', e.target.value)} />
-                <div className="col-span-1 text-xs font-bold text-gray-700 dark:text-gray-300 text-right">{amt.toFixed(1)}</div>
+                <div className="col-span-1 text-xs font-bold text-gray-700 dark:text-gray-300 text-right">{amt.toFixed(2)}</div>
                 <button onClick={() => removeLine(i)} className="col-span-1 text-red-400 hover:text-red-600 text-xs text-center">✕</button>
               </div>
             )
@@ -301,9 +300,21 @@ export default function InvoiceTab({ card, onCardUpdate }) {
         </div>
       </div>
 
-      {/* Totals */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded p-4">
-        <div className="max-w-xs ml-auto space-y-2">
+      {/* Totals + Notes */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded p-4 flex flex-col md:flex-row gap-4">
+        {/* Notes */}
+        <div className="flex-1">
+          <p className={labelCls}>Special Notes</p>
+          <textarea
+            className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-green-400 rounded resize-none"
+            rows={5}
+            placeholder="Any special notes for the customer..."
+            value={meta.notes || ''}
+            onChange={e => updateMeta('notes', e.target.value)}
+          />
+        </div>
+        {/* Totals */}
+        <div className="min-w-[220px] space-y-2">
           <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
             <span>Sub-Total</span><span className="font-bold">AED {subTotal.toFixed(2)}</span>
           </div>
