@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import api from '../api/client'
 
 // ── Constants ─────────────────────────────────────────────────────
@@ -315,6 +315,9 @@ function generatePDF(report, card) {
 
 // ── Main Component ────────────────────────────────────────────────
 export default function InspectionReportTab({ card, onCardUpdate, canEdit }) {
+  const [users, setUsers] = useState([])
+  useEffect(() => { api.get('/users').then(r => setUsers(Array.isArray(r.data) ? r.data : [])).catch(() => {}) }, [])
+
   const [report, setReport] = useState(() => {
     const def = makeDefault()
     if (!card.inspectionReport) return def
@@ -406,8 +409,13 @@ export default function InspectionReportTab({ card, onCardUpdate, canEdit }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="label mb-1">Inspector Name</p>
-          <input className="input text-sm" value={report.inspectorName} disabled={!canEdit}
-            onChange={e=>setReport(r=>({...r,inspectorName:e.target.value}))} placeholder="Inspector name" />
+          <select className="input text-sm" value={report.inspectorName} disabled={!canEdit}
+            onChange={e=>setReport(r=>({...r,inspectorName:e.target.value}))}>
+            <option value="">— Select Inspector —</option>
+            {users.filter(u => u.isActive !== false).map(u => (
+              <option key={u._id} value={u.name}>{u.name} ({u.role})</option>
+            ))}
+          </select>
         </div>
         <div>
           <p className="label mb-1">Inspection Date</p>

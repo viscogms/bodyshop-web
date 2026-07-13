@@ -45,7 +45,7 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
   const [alreadyReferred,     setAlreadyReferred]     = useState(!!(initial?.linkedJobId))
 
   useEffect(() => {
-    api.get('/users').then(r => setUsers(r.data)).catch(() => {})
+    api.get('/users').then(r => setUsers(Array.isArray(r.data) ? r.data : [])).catch(() => {})
   }, [])
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
