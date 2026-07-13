@@ -197,7 +197,14 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
               {/* Staff */}
               <Section title="Staff">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Inspection Tech"><input className="input" value={form.inspectionTech} onChange={e => set('inspectionTech', e.target.value)} /></Field>
+                  <Field label="Inspection Tech">
+                    <select className="input" value={form.inspectionTech} onChange={e => set('inspectionTech', e.target.value)}>
+                      <option value="">— Unassigned —</option>
+                      {users.filter(u => u.isActive !== false).map(u => (
+                        <option key={u._id} value={u.name}>{u.name} ({u.role})</option>
+                      ))}
+                    </select>
+                  </Field>
                   <Field label="🔧 Assigned Mechanic">
                     <select className="input" value={form.jobDoneBy} onChange={e => set('jobDoneBy', e.target.value)}>
                       <option value="">— Unassigned —</option>
