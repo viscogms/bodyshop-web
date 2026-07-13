@@ -9,7 +9,7 @@ const NAV = [
   { to: '/finance',  label: 'Finance',      icon: '💵', adminOnly: true },
   { to: '/reports',  label: 'Reports',      icon: '📊', adminOnly: true },
   { to: '/todos',    label: "To-Do's",      icon: '📋' },
-  { to: '/admin',    label: 'Admin',        icon: '🛡️', adminOnly: true },
+  { to: '/admin',    label: 'Staff',        icon: '👥', adminOnly: true },
 ]
 
 // Owner is a read-only viewer — only the Job Cards link, nothing else
