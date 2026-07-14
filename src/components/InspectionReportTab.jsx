@@ -316,7 +316,7 @@ function generatePDF(report, card) {
 // ── Main Component ────────────────────────────────────────────────
 export default function InspectionReportTab({ card, onCardUpdate, canEdit }) {
   const [users, setUsers] = useState([])
-  useEffect(() => { api.get('/users').then(r => setUsers(Array.isArray(r.data) ? r.data : [])).catch(() => {}) }, [])
+  useEffect(() => { api.get('/staff').then(r => setUsers(Array.isArray(r.data) ? r.data : [])).catch(() => {}) }, [])
 
   const [report, setReport] = useState(() => {
     const def = makeDefault()
@@ -413,7 +413,7 @@ export default function InspectionReportTab({ card, onCardUpdate, canEdit }) {
             onChange={e=>setReport(r=>({...r,inspectorName:e.target.value}))}>
             <option value="">— Select Inspector —</option>
             {users.filter(u => u.isActive !== false).map(u => (
-              <option key={u._id} value={u.name}>{u.name} ({u.role})</option>
+              <option key={u._id} value={u.name}>{u.name} ({u.category})</option>
             ))}
           </select>
         </div>

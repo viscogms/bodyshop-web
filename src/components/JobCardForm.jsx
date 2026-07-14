@@ -45,7 +45,7 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
   const [alreadyReferred,     setAlreadyReferred]     = useState(!!(initial?.linkedJobId))
 
   useEffect(() => {
-    api.get('/users').then(r => setUsers(Array.isArray(r.data) ? r.data : [])).catch(() => {})
+    api.get('/staff').then(r => setUsers(Array.isArray(r.data) ? r.data : [])).catch(() => {})
   }, [])
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
@@ -201,7 +201,7 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
                     <select className="input" value={form.inspectionTech} onChange={e => set('inspectionTech', e.target.value)}>
                       <option value="">— Unassigned —</option>
                       {users.filter(u => u.isActive !== false).map(u => (
-                        <option key={u._id} value={u.name}>{u.name} ({u.role})</option>
+                        <option key={u._id} value={u.name}>{u.name} ({u.category})</option>
                       ))}
                     </select>
                   </Field>
@@ -209,7 +209,7 @@ export default function JobCardForm({ initial, onSave, onCancel }) {
                     <select className="input" value={form.jobDoneBy} onChange={e => set('jobDoneBy', e.target.value)}>
                       <option value="">— Unassigned —</option>
                       {users.filter(u => u.isActive !== false).map(u => (
-                        <option key={u._id} value={u.name}>{u.name} ({u.role})</option>
+                        <option key={u._id} value={u.name}>{u.name} ({u.category})</option>
                       ))}
                     </select>
                   </Field>
