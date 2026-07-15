@@ -28,7 +28,10 @@ export default function AttendanceTab() {
   const [rows,      setRows]      = useState([])
   const [saving,    setSaving]    = useState(false)
   const [loading,   setLoading]   = useState(false)
-  const reminderShown = useRef(false)
+  const reminderShown  = useRef(false)
+  const eveningShown   = useRef(false)
+  const mondayShown    = useRef(false)
+  const [expanded,     setExpanded]     = useState(null)
 
   useEffect(() => {
     api.get('/staff').then(r => setStaff(Array.isArray(r.data) ? r.data : [])).catch(() => {})
@@ -61,6 +64,48 @@ export default function AttendanceTab() {
         }
       })
       setRows(built)
+      if (date === today() && !eveningShown.current) {
+        const now = new Date()
+        const day = now.getDay()
+        const after630 = now.getHours() > 18 || (now.getHours() === 18 && now.getMinutes() >= 30)
+        if (after630 && day !== 0) {
+          const noOut = built.filter(r => r.status !== 'Absent' && !r.timeOut)
+          if (noOut.length > 0) {
+            eveningShown.current = true
+            Swal.fire({
+              icon: 'bell',
+              title: '⏰ End of Day',
+              text: `${noOut.length} staff have no time-out. Mark all as 18:30?`,
+              confirmButtonText: 'Yes, Mark 18:30',
+              cancelButtonText: 'Skip',
+              showCancelButton: true,
+              confirmButtonColor: '#16a34a',
+            }).then(({ isConfirmed }) => {
+              if (isConfirmed) markAllTimeOut(built)
+            })
+          }
+        }
+      }
+      if (date === today() && !mondayShown.current) {
+        const now = new Date()
+        if (now.getDay() === 1) {
+          mondayShown.current = true
+          const sun = new Date(now)
+          sun.setDate(sun.getDate() - 1)
+          const sunStr = sun.toISOString().split('T')[0]
+          Swal.fire({
+            icon: 'question',
+            title: '📅 Sunday Check',
+            text: 'Did staff work last Sunday?',
+            confirmButtonText: 'Yes, Mark Sunday',
+            cancelButtonText: 'No',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+          }).then(({ isConfirmed }) => {
+            if (isConfirmed) setDate(sunStr)
+          })
+        }
+      }
       if (date === today() && !reminderShown.current) {
         const unmarked = staff.filter(s => !existing.find(r => r.staffId === s._id || r.staffName === s.name))
         if (unmarked.length > 0) {
@@ -147,6 +192,32 @@ export default function AttendanceTab() {
       }
     }
     fetchDaily()
+  }
+
+  const markAllTimeOut = async (builtRows) => {
+    const toMark = (builtRows || rows).filter(r => r.status !== 'Absent' && !r.timeOut)
+    await Promise.all(toMark.map(row =>
+      api.post('/attendance', { ...row, timeOut: '18:30', overtime: Number(row.overtime)||0, date })
+    ))
+    fetchDaily()
+  }
+
+  const saveRow = async (idx) => {
+    const row = rows[idx]
+    try {
+      await api.post('/attendance', {
+        staffId: row.staffId, staffName: row.staffName, date,
+        status: row.status,
+        timeIn:  row.status === 'Absent' ? '' : row.timeIn,
+        timeOut: row.status === 'Absent' ? '' : row.timeOut,
+        overtime: Number(row.overtime) || 0,
+        notes: row.notes,
+      })
+      setRows(prev => prev.map((r, i) => i === idx ? { ...r, saved: true } : r))
+      setExpanded(null)
+    } catch (_) {
+      Swal.fire('Error', 'Failed to save', 'error')
+    }
   }
 
   const fetchMonthly = async () => {
@@ -238,52 +309,71 @@ export default function AttendanceTab() {
           )}
 
           <div className="space-y-2">
-            {rows.map((row, idx) => (
-              <div key={row.staffId} className={`card border-l-4 ${row.saved ? 'border-l-green-500' : 'border-l-gray-300 dark:border-l-gray-600'}`}>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="sm:w-44 shrink-0">
-                    <p className="font-bold text-sm text-gray-900 dark:text-white">{row.staffName}</p>
-                    <p className="text-xs text-gray-500">{row.category}</p>
-                  </div>
-
-                  <div className="flex gap-1 flex-wrap shrink-0">
-                    {STATUSES.map(s => (
-                      <button key={s} onClick={() => updateRow(idx, 'status', s)}
-                        className={`text-xs px-2.5 py-1 font-bold transition-colors
-                          ${row.status === s ? STATUS_COLORS[s] : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-
-                  {row.status !== 'Absent' && (
-                    <div className="flex gap-2 flex-wrap flex-1">
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500 whitespace-nowrap">In</label>
-                        <input type="time" className="input text-xs py-1 w-28"
-                          value={row.timeIn} onChange={e => updateRow(idx, 'timeIn', e.target.value)} />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500 whitespace-nowrap">Out</label>
-                        <input type="time" className="input text-xs py-1 w-28"
-                          value={row.timeOut} onChange={e => updateRow(idx, 'timeOut', e.target.value)} />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500 whitespace-nowrap">OT hrs</label>
-                        <input type="number" min="0" step="0.5" className="input text-xs py-1 w-16"
-                          value={row.overtime} onChange={e => updateRow(idx, 'overtime', e.target.value)} />
-                      </div>
+            {rows.map((row, idx) => {
+              const isOpen = expanded === row.staffId
+              return (
+                <div key={row.staffId} className={`card border-l-4 ${row.saved ? 'border-l-green-500' : 'border-l-gray-300 dark:border-l-gray-600'}`}>
+                  <button className="w-full flex items-center justify-between gap-3 text-left"
+                    onClick={() => setExpanded(isOpen ? null : row.staffId)}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="font-bold text-sm text-gray-900 dark:text-white truncate">{row.staffName}</span>
+                      <span className="hidden sm:inline text-xs text-gray-400">{row.category}</span>
                     </div>
-                  )}
-                  {row.status === 'Absent' && (
-                    <div className="flex-1">
-                      <input className="input text-xs py-1 w-full" placeholder="Reason (optional)"
-                        value={row.notes} onChange={e => updateRow(idx, 'notes', e.target.value)} />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-[10px] px-2 py-0.5 font-bold ${STATUS_COLORS[row.status]}`}>{row.status}</span>
+                      {row.timeIn  && <span className="text-[10px] text-gray-400">▶ {row.timeIn}</span>}
+                      {row.timeOut && <span className="text-[10px] text-gray-400">■ {row.timeOut}</span>}
+                      <span className="text-gray-400 text-xs">{isOpen ? '▲' : '▼'}</span>
+                    </div>
+                  </button>
+                  {isOpen && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                      <div className="flex gap-1 flex-wrap">
+                        {STATUSES.map(s => (
+                          <button key={s} onClick={() => updateRow(idx, 'status', s)}
+                            className={`text-xs px-3 py-1.5 font-bold transition-colors
+                              ${row.status === s ? STATUS_COLORS[s] : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                      {row.status !== 'Absent' ? (
+                        <div className="flex gap-3 flex-wrap items-end">
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Clock In</label>
+                            <div className="flex gap-1 items-center">
+                              <input type="time" className="input text-xs py-1.5 w-28"
+                                value={row.timeIn} onChange={e => updateRow(idx, 'timeIn', e.target.value)} />
+                              <button onClick={() => updateRow(idx, 'timeIn', '08:30')}
+                                className="text-xs px-2 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 font-bold whitespace-nowrap">8:30</button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">Clock Out</label>
+                            <div className="flex gap-1 items-center">
+                              <input type="time" className="input text-xs py-1.5 w-28"
+                                value={row.timeOut} onChange={e => updateRow(idx, 'timeOut', e.target.value)} />
+                              <button onClick={() => updateRow(idx, 'timeOut', '18:30')}
+                                className="text-xs px-2 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 font-bold whitespace-nowrap">18:30</button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-1">OT hrs</label>
+                            <input type="number" min="0" step="0.5" className="input text-xs py-1.5 w-16"
+                              value={row.overtime} onChange={e => updateRow(idx, 'overtime', e.target.value)} />
+                          </div>
+                        </div>
+                      ) : (
+                        <input className="input text-xs py-1.5 w-full" placeholder="Reason for absence (optional)"
+                          value={row.notes} onChange={e => updateRow(idx, 'notes', e.target.value)} />
+                      )}
+                      <button onClick={() => saveRow(idx)}
+                        className="text-xs px-4 py-1.5 bg-green-700 text-white font-bold">💾 Save</button>
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

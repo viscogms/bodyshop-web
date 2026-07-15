@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [editingUserId, setEditingUserId] = useState(null)
   const [editingStaffId,setEditingStaffId]= useState(null)
   const [form, setForm] = useState(BLANK())
+  const [expandedStaff, setExpandedStaff] = useState(null)
 
   // Parts state
   const [newGroup,  setNewGroup]  = useState('')
@@ -216,45 +217,54 @@ export default function AdminPage() {
             <button onClick={openNew} className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 text-sm font-bold">+ Add Staff</button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="space-y-2">
             {filtered.map(({ staff: s, user: u }) => {
               const name = s?.name || u?.name
-              const hasAccount = !!u
-              const hasHR = !!s
+              const isOpen = expandedStaff === name
               return (
-                <div key={name} className="card border-l-4 border-l-green-600 cursor-pointer hover:shadow-md transition-shadow" onClick={() => openEdit({ staff: s, user: u })}>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="min-w-0">
-                      <p className="font-black text-gray-900 dark:text-white truncate">{name}</p>
-                      <div className="flex flex-wrap gap-1 mt-0.5">
-                        {hasHR && <span className="inline-block text-[10px] font-bold px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">{s.category}</span>}
-                        {hasAccount && (
-                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 ${u.isActive ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600'}`}>
-                            {u.role} {u.isActive ? '✓' : '✗'}
-                          </span>
-                        )}
+                <div key={name} className="card border-l-4 border-l-green-600">
+                  <button className="w-full flex items-center justify-between gap-3 text-left"
+                    onClick={() => setExpandedStaff(isOpen ? null : name)}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 font-black text-sm shrink-0">
+                        {name?.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="font-black text-gray-900 dark:text-white truncate">{name}</span>
+                      {s && <span className="hidden sm:inline text-[10px] font-bold px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700">{s.category}</span>}
+                    </div>
+                    <span className="text-gray-400 text-xs shrink-0">{isOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                      <div className="flex flex-wrap gap-1">
+                        {s && <span className="text-[10px] font-bold px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700">{s.category}</span>}
+                        {u && <span className={`text-[10px] font-bold px-2 py-0.5 ${u.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>{u.role} {u.isActive ? '✓' : '✗'}</span>}
+                        {!s && <span className="text-[10px] text-gray-400 italic">No HR record</span>}
+                        {!u && <span className="text-[10px] text-gray-400 italic">No account</span>}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-400">
+                        {u?.username    && <p>🔑 {u.username}</p>}
+                        {s?.country     && <p>🌍 {s.country}</p>}
+                        {s?.salary > 0  && <p>💰 AED {s.salary}</p>}
+                        {s?.eid         && <p>🪪 {s.eid}</p>}
+                        {s?.eidExpiry   && <p>📅 EID exp: {s.eidExpiry}</p>}
+                        {s?.passportNo  && <p>📘 {s.passportNo}</p>}
+                        {s?.birthday    && <p>🎂 {s.birthday}</p>}
+                        {s?.email       && <p className="col-span-2 truncate">✉️ {s.email}</p>}
+                        {(s?.mobiles||[]).filter(Boolean).map((m,i) => <p key={i}>📞 {m}</p>)}
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={() => openEdit({ staff: s, user: u })}
+                          className="text-xs px-3 py-1.5 bg-green-700 text-white font-bold">✏️ Edit</button>
+                        <button onClick={() => deletePerson({ staff: s, user: u })}
+                          className="text-xs px-3 py-1.5 border border-red-300 text-red-500 hover:bg-red-50">🗑️ Delete</button>
                       </div>
                     </div>
-                    <button onClick={e => { e.stopPropagation(); deletePerson({ staff: s, user: u }) }}
-                      className="text-red-400 hover:text-red-600 text-xs font-bold px-2 py-1 shrink-0">🗑️</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-600 dark:text-gray-400">
-                    {hasAccount && <p>🔑 {u.username}</p>}
-                    {s?.country     && <p>🌍 {s.country}</p>}
-                    {s?.salary > 0  && <p>💰 AED {s.salary}</p>}
-                    {s?.eid         && <p>🪪 {s.eid}</p>}
-                    {s?.eidExpiry   && <p>📅 EID: {s.eidExpiry}</p>}
-                    {s?.passportNo  && <p>📘 {s.passportNo}</p>}
-                    {s?.birthday    && <p>🎂 {s.birthday}</p>}
-                    {s?.email       && <p className="col-span-2 truncate">✉️ {s.email}</p>}
-                    {(s?.mobiles||[]).filter(Boolean).map((m,i) => <p key={i}>📞 {m}</p>)}
-                    {!hasHR      && <p className="text-gray-400 italic">No HR record</p>}
-                    {!hasAccount && <p className="text-gray-400 italic">No account</p>}
-                  </div>
+                  )}
                 </div>
               )
             })}
-            {filtered.length === 0 && <p className="text-gray-400 text-sm col-span-3">No staff found.</p>}
+            {filtered.length === 0 && <p className="text-gray-400 text-sm">No staff found.</p>}
           </div>
 
           {showModal && (
