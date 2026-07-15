@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import api from '../api/client'
 import Swal from 'sweetalert2'
 import AttendanceTab from '../components/AttendanceTab'
+import SalaryAdvanceModal from '../components/SalaryAdvanceModal'
 
 const STAFF_CATEGORIES = ['Foreman','Technician','Helper','Supervisor','Accounts Clerk','Driver','Denter','Painter']
 const ROLES = ['Admin','Owner','Technician','User']
@@ -29,6 +30,7 @@ export default function AdminPage() {
   const [editingStaffId,setEditingStaffId]= useState(null)
   const [form, setForm] = useState(BLANK())
   const [expandedStaff, setExpandedStaff] = useState(null)
+  const [advanceStaff,  setAdvanceStaff]  = useState(null)
 
   // Parts state
   const [newGroup,  setNewGroup]  = useState('')
@@ -253,9 +255,15 @@ export default function AdminPage() {
                         {s?.email       && <p className="col-span-2 truncate">✉️ {s.email}</p>}
                         {(s?.mobiles||[]).filter(Boolean).map((m,i) => <p key={i}>📞 {m}</p>)}
                       </div>
-                      <div className="flex gap-2 pt-1">
+                      <div className="flex gap-2 pt-1 flex-wrap">
                         <button onClick={() => openEdit({ staff: s, user: u })}
                           className="text-xs px-3 py-1.5 bg-green-700 text-white font-bold">✏️ Edit</button>
+                        {s && (
+                          <button onClick={() => setAdvanceStaff(s)}
+                            className="text-xs px-3 py-1.5 bg-orange-100 text-orange-700 font-bold hover:bg-orange-200">
+                            💰 Advance
+                          </button>
+                        )}
                         <button onClick={() => deletePerson({ staff: s, user: u })}
                           className="text-xs px-3 py-1.5 border border-red-300 text-red-500 hover:bg-red-50">🗑️ Delete</button>
                       </div>
@@ -438,5 +446,9 @@ export default function AdminPage() {
         </div>
       )}
     </div>
+
+    {advanceStaff && (
+      <SalaryAdvanceModal staff={advanceStaff} onClose={() => setAdvanceStaff(null)} />
+    )}
   )
 }
