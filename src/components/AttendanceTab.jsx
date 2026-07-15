@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import api from '../api/client'
 import Swal from 'sweetalert2'
 
@@ -28,6 +28,7 @@ export default function AttendanceTab() {
   const [rows,      setRows]      = useState([])
   const [saving,    setSaving]    = useState(false)
   const [loading,   setLoading]   = useState(false)
+  const reminderShown = useRef(false)
 
   useEffect(() => {
     api.get('/staff').then(r => setStaff(Array.isArray(r.data) ? r.data : [])).catch(() => {})
@@ -60,8 +61,92 @@ export default function AttendanceTab() {
         }
       })
       setRows(built)
+      if (date === today() && !reminderShown.current) {
+        const unmarked = staff.filter(s => !existing.find(r => r.staffId === s._id || r.staffName === s.name))
+        if (unmarked.length > 0) {
+          reminderShown.current = true
+          const { isConfirmed } = await Swal.fire({
+            icon: 'question',
+            title: '📅 Attendance Reminder',
+            text: `${unmarked.length} staff member${unmarked.length > 1 ? 's have' : ' has'} not been marked for today. Mark attendance now?`,
+            confirmButtonText: 'Mark Now',
+            cancelButtonText: 'Later',
+            showCancelButton: true,
+            confirmButtonColor: '#16a34a',
+          })
+          if (isConfirmed) runQuickMark(unmarked)
+        }
+      }
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
+  }
+
+  const runQuickMark = async (unmarked) => {
+    for (let i = 0; i < unmarked.length; i++) {
+      const s = unmarked[i]
+      const { isConfirmed, value } = await Swal.fire({
+        title: `${i + 1} / ${unmarked.length}`,
+        html: `
+          <div style="text-align:left">
+            <div style="background:#f0fdf4;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+              <div style="font-weight:800;font-size:17px;color:#14532d">${s.name}</div>
+              <div style="color:#16a34a;font-size:13px;margin-top:2px">${s.category || ''}</div>
+            </div>
+            <label style="font-size:11px;font-weight:700;color:#16a34a;letter-spacing:1px">STATUS</label>
+            <select id="qa-status" style="width:100%;margin-top:6px;margin-bottom:14px;padding:10px;border-radius:8px;border:1.5px solid #e2e8f0;font-weight:700;font-size:14px">
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+              <option value="Late">Late</option>
+              <option value="Half Day">Half Day</option>
+            </select>
+            <div id="qa-times" style="display:flex;gap:10px">
+              <div style="flex:1">
+                <label style="font-size:11px;font-weight:700;color:#64748b">CLOCK IN</label>
+                <input id="qa-in" type="text" placeholder="08:00" style="width:100%;margin-top:4px;padding:10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:14px;box-sizing:border-box" />
+              </div>
+              <div style="flex:1">
+                <label style="font-size:11px;font-weight:700;color:#64748b">CLOCK OUT</label>
+                <input id="qa-out" type="text" placeholder="17:00" style="width:100%;margin-top:4px;padding:10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:14px;box-sizing:border-box" />
+              </div>
+              <div style="flex:0.6">
+                <label style="font-size:11px;font-weight:700;color:#64748b">OT HRS</label>
+                <input id="qa-ot" type="number" placeholder="0" value="0" style="width:100%;margin-top:4px;padding:10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:14px;box-sizing:border-box" />
+              </div>
+            </div>
+          </div>`,
+        confirmButtonText: i + 1 === unmarked.length ? '✓ Finish' : 'Save & Next →',
+        cancelButtonText: 'Skip',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        didOpen: () => {
+          const sel = document.getElementById('qa-status')
+          sel.addEventListener('change', () => {
+            document.getElementById('qa-times').style.display = sel.value === 'Absent' ? 'none' : 'flex'
+          })
+        },
+        preConfirm: () => ({
+          status:   document.getElementById('qa-status').value,
+          timeIn:   document.getElementById('qa-in')?.value  || '',
+          timeOut:  document.getElementById('qa-out')?.value || '',
+          overtime: Number(document.getElementById('qa-ot')?.value) || 0,
+        }),
+      })
+      if (isConfirmed && value) {
+        try {
+          await api.post('/attendance', {
+            staffId:   s._id,
+            staffName: s.name,
+            date:      today(),
+            status:    value.status,
+            timeIn:    value.status === 'Absent' ? '' : value.timeIn,
+            timeOut:   value.status === 'Absent' ? '' : value.timeOut,
+            overtime:  value.overtime,
+            notes:     '',
+          })
+        } catch (_) {}
+      }
+    }
+    fetchDaily()
   }
 
   const fetchMonthly = async () => {
