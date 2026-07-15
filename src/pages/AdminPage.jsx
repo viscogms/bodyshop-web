@@ -3,6 +3,7 @@ import api from '../api/client'
 import Swal from 'sweetalert2'
 import AttendanceTab from '../components/AttendanceTab'
 import SalaryAdvanceModal from '../components/SalaryAdvanceModal'
+import LaborTab from '../components/LaborTab'
 
 const STAFF_CATEGORIES = ['Foreman','Technician','Helper','Supervisor','Accounts Clerk','Driver','Denter','Painter']
 const ROLES = ['Admin','Owner','Technician','User']
@@ -195,7 +196,7 @@ export default function AdminPage() {
       <h1 className="page-header">Staff & Settings</h1>
 
       <div className="flex border-b border-gray-200 dark:border-gray-800">
-        {[['staff','👥 Staff'],['attendance','📅 Attendance'],['parts','⚙️ Parts']].map(([t,label]) => (
+        {[['staff','👥 Staff'],['attendance','📅 Attendance'],['labor','💼 Labor'],['parts','⚙️ Parts']].map(([t,label]) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-5 py-2 text-sm font-bold transition-colors border-b-2 -mb-px
               ${tab===t ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>
@@ -386,6 +387,8 @@ export default function AdminPage() {
       )}
 
       {tab === 'attendance' && <AttendanceTab />}
+
+      {tab === 'labor' && <LaborTab />}
 
       {tab === 'parts' && (
         <div className="space-y-4">
