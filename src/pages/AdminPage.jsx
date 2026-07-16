@@ -448,10 +448,9 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+      {advanceStaff && (
+        <SalaryAdvanceModal staff={advanceStaff} onClose={() => setAdvanceStaff(null)} />
+      )}
     </div>
-
-    {advanceStaff && (
-      <SalaryAdvanceModal staff={advanceStaff} onClose={() => setAdvanceStaff(null)} />
-    )}
   )
 }
