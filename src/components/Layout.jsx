@@ -6,6 +6,7 @@ const NAV = [
   { to: '/',         label: 'Dashboard',    icon: '📊', exact: true },
   { to: '/jobcards', label: 'Job Cards',    icon: '🚗' },
   { to: '/kanban',   label: 'Kanban',       icon: '📋' },
+  { to: '/customers', label: 'Customers',   icon: '👤', adminOnly: true },
   { to: '/finance',  label: 'Finance',      icon: '💵', adminOnly: true },
   { to: '/reports',  label: 'Reports',      icon: '📊', adminOnly: true },
   { to: '/todos',    label: "To-Do's",      icon: '📋' },

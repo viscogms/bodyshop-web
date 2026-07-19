@@ -9,6 +9,7 @@ import FinancePage  from './pages/FinancePage'
 import ReportsPage  from './pages/ReportsPage'
 import TodosPage    from './pages/TodosPage'
 import AdminPage    from './pages/AdminPage'
+import CustomersPage from './pages/CustomersPage'
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading, isAdmin } = useAuthContext()
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="reports"  element={<ProtectedRoute adminOnly><ReportsPage /></ProtectedRoute>} />
         <Route path="todos"    element={<TodosPage />} />
         <Route path="admin"    element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
+        <Route path="customers" element={<ProtectedRoute adminOnly><CustomersPage /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
